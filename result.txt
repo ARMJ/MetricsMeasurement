@@ -1,0 +1,6 @@
+Main:
+class variables: [p]
+ajaira: [p, str]
+main: [j]
+
+==============================

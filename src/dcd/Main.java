@@ -20,12 +20,16 @@ public class Main {
         System.out.println("Number of files: " + javaFiles.size());
         System.out.println("Number of classes: " + classNames.size());
         
+        int i = 1;
         for(File file: javaFiles){
-        	System.out.println(file.toString());
+        	System.out.println(file.getName());
         	CompilationUnit cu = JavaParser.parse(file);
+        	
         	dcd.unusedVariableDetection(cu);
-        	break;
         }
+        
+        dcd.writeInFile();
+        //dcd.getVariablesUnusedInClass();
 
 	}
 

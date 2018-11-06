@@ -1,5 +1,10 @@
 package dcd;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,9 +22,8 @@ import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 
 public class DCD {
 	
+	String str = "";
 	public void unusedVariableDetection(CompilationUnit cu){
-		List<String> classVariables = new ArrayList<>();
-		
 		HashMap<String, ArrayList<String>> variablesInMethods = new HashMap<String, ArrayList<String>>();
 		HashMap<String, ArrayList<String>> variablesInClass = new HashMap<String, ArrayList<String>>();
 		HashMap<String, HashSet<String>> variablesAccessedInMethods = new HashMap<String, HashSet<String>>();
@@ -51,6 +55,18 @@ public class DCD {
 					variablesAccessedInClass.put(coi.getNameAsString(), new HashSet<>());
 				}
 				variablesAccessedInClass.get(coi.getNameAsString()).add(ne.getNameAsString());
+				if(variablesInClass.containsKey(coi.getNameAsString())) {
+					variablesInClass.get(coi.getNameAsString()).remove(ne.getNameAsString());
+				}
+			});
+			coi.findAll(FieldAccessExpr.class).forEach(fae -> {
+				if(!variablesAccessedInClass.containsKey(coi.getNameAsString())){
+					variablesAccessedInClass.put(coi.getNameAsString(), new HashSet<>());
+				}
+				variablesAccessedInClass.get(coi.getNameAsString()).add(fae.getNameAsString());
+				if(variablesInClass.containsKey(coi.getNameAsString())) {
+					variablesInClass.get(coi.getNameAsString()).remove(fae.getNameAsString());
+				}
 			});
 			coi.findAll(MethodDeclaration.class).forEach(md -> {
 				md.findAll(NameExpr.class).forEach(ne -> {
@@ -58,36 +74,62 @@ public class DCD {
 						variablesAccessedInMethods.put(md.getNameAsString(), new HashSet<>());
 					}
 					variablesAccessedInMethods.get(md.getNameAsString()).add(ne.getNameAsString());
+					if(variablesInMethods.containsKey(md.getNameAsString())) {
+						variablesInMethods.get(md.getNameAsString()).remove(ne.getNameAsString());
+					}
+				});
+				md.findAll(FieldAccessExpr.class).forEach(fae -> {
+					if(!variablesAccessedInMethods.containsKey(md.getNameAsString())){
+						variablesAccessedInMethods.put(md.getNameAsString(), new HashSet<>());
+					}
+					variablesAccessedInMethods.get(md.getNameAsString()).add(fae.getNameAsString());
+					if(variablesInMethods.containsKey(md.getNameAsString())) {
+						variablesInMethods.get(md.getNameAsString()).remove(fae.getNameAsString());
+					}
 				});
 			});
 			
 		});
 		
-		int totalDeclared = 0;
-		int totalAccessed = 0;
-		
-		for(String cls: variablesInClass.keySet()){
-			totalDeclared += variablesInClass.get(cls).size();
-			System.out.println(cls +  " -> declared = " + variablesInClass.get(cls).size() + ": " + variablesInClass.get(cls));
+		for(String cls: variablesInClass.keySet()) {
+			str += cls + ":\n";
+			str += "class variables: " + variablesInClass.get(cls) + "\n";
+			//System.out.println(cls + " ==> unused class variables: " + variablesInClass.get(cls));
 		}
 		
-		for(String mtd: variablesInMethods.keySet()){
-			totalDeclared += variablesInMethods.get(mtd).size();
-			System.out.println(mtd +  " -> declared = " + variablesInMethods.get(mtd).size() + ": " + variablesInMethods.get(mtd));
+		for(String mtd: variablesInMethods.keySet()) {
+			str += mtd + ": ";
+			str += variablesInMethods.get(mtd) + "\n";
+			//System.out.println(mtd + " ==> unused varibles in method: " + variablesInMethods.get(mtd));
 		}
+		str += "\n==============================\n";
 		
-		for(String cls: variablesAccessedInClass.keySet()){
-			totalAccessed += variablesAccessedInClass.get(cls).size();
-			System.out.println(cls +  " -> accessed = " + variablesAccessedInClass.get(cls).size() + ": " + variablesAccessedInClass.get(cls));
-		}
-		
-		for(String mtd: variablesAccessedInMethods.keySet()){
-			totalAccessed += variablesAccessedInMethods.get(mtd).size();
-			System.out.println(mtd +  " -> accessed = " + variablesAccessedInMethods.get(mtd).size() + ": " + variablesAccessedInMethods.get(mtd));
-		}
-		
-		System.out.println("declared: " + totalDeclared);
-		System.out.println("accessed: " + totalAccessed);
+//		int totalDeclared = 0;
+//		int totalAccessed = 0;
+//		
+//		for(String cls: variablesInClass.keySet()){
+//			totalDeclared += variablesInClass.get(cls).size();
+//			//System.out.println(cls +  " -> declared = " + variablesInClass.get(cls).size() + ": " + variablesInClass.get(cls));
+//		}
+//		
+//		for(String mtd: variablesInMethods.keySet()){
+//			totalDeclared += variablesInMethods.get(mtd).size();
+//			//System.out.println(mtd +  " -> declared = " + variablesInMethods.get(mtd).size() + ": " + variablesInMethods.get(mtd));
+//		}
+//		
+//		for(String cls: variablesAccessedInClass.keySet()){
+//			totalAccessed += variablesAccessedInClass.get(cls).size();
+//			//System.out.println(cls +  " -> accessed = " + variablesAccessedInClass.get(cls).size() + ": " + variablesAccessedInClass.get(cls));
+//			
+//		}
+//		
+//		for(String mtd: variablesAccessedInMethods.keySet()){
+//			totalAccessed += variablesAccessedInMethods.get(mtd).size();
+//			System.out.println(mtd +  " -> accessed = " + variablesAccessedInMethods.get(mtd).size() + ": " + variablesAccessedInMethods.get(mtd));
+//		}
+//		
+//		System.out.println("declared: " + totalDeclared);
+//		System.out.println("accessed: " + totalAccessed);
 		
 //		cu.findAll(VariableDeclarationExpr.class).forEach(fd -> {
 //			for(VariableDeclarator vd: fd.getVariables()){
@@ -112,4 +154,18 @@ public class DCD {
 //			System.out.println(variables.size());
 //		});
 	}
+	
+//	public void getVariablesUnusedInClass(){
+//		for(String cls: variablesInClass.keySet()) {
+//			System.out.println(cls + " ==> unused class variables: " + variablesInClass.get(cls));
+//		}
+//	}
+	
+	public void writeInFile() throws IOException {
+		System.out.println(str);
+		PrintWriter writer = new PrintWriter(new File("result.txt"));
+		writer.write(str);
+		writer.close();
+	}
+	
 }
