@@ -1,6 +1,5 @@
-Main:
-class variables: [p]
-ajaira: [p, str]
-main: [j]
-
-==============================
+Apollo ==> initialization: 21    ==    increament: 21
+Arthas ==> initialization: 88    ==    increament: 91
+Common io ==> initialization: 140   ==	increament: 141
+Component client  ==>  initialization: 151  ==  144
+Nachos	==>  initialization: 129	increament: 115
